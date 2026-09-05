@@ -142,7 +142,7 @@ const sendAdminAlert = async (booking) => {
       <p><strong>Route:</strong> ${flight.from} → ${flight.to} on ${flight.date}</p>
       <p><strong>Flight:</strong> ${flight.airline} ${flight.flightNumber}</p>
       <p><strong>Amount:</strong> ${formatPrice(payment.amount)} — <strong>${payment.status.toUpperCase()}</strong></p>
-      <p><a href="http://localhost:5173/admin/bookings">View in Admin Panel →</a></p>
+          <p><a href="https://www.fareoracle.com/admin/bookings">View in Admin Panel →</a></p>
     `,
   });
 

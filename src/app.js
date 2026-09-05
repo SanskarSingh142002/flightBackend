@@ -13,6 +13,8 @@ const app = express();
 // ── CORS ─────────────────────────────────────────────────────────────────────
 const allowedOrigins = [
   process.env.FRONTEND_URL || 'http://localhost:5173',
+  'https://fareoracle.com',
+  'https://www.fareoracle.com',
   'http://localhost:3000',
 ];
 app.use(cors({

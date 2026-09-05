@@ -61,8 +61,8 @@ const searchSerpApi = async ({ from, to, departDate, passengers, cabinClass }) =
     return toFlight({
       id: `serp-${Date.now()}-${index}`,
       airline: first?.airline || 'Airline',
-      airlineCode: first?.airline_logo?.match(/\/([^/]+)\.com/)?.[1] || '',
       flightNumber: first?.flight_number || '',
+      airlineCode: first?.flight_number?.match(/^[A-Z0-9]+/)?.[0] || '',
       from: first?.departure_airport?.id || from,
       to: last?.arrival_airport?.id || to,
       date: departDate,
