@@ -1,4 +1,4 @@
-const SERP_URL = 'https://serpapi.com/search.json';
+const IGNAV_URL = 'https://ignav.com';
 
 const formatDuration = (minutes) => {
   const hours = Math.floor(minutes / 60);
@@ -6,81 +6,70 @@ const formatDuration = (minutes) => {
   return mins ? `${hours}h ${mins}m` : `${hours}h`;
 };
 
-const getMinutes = (from, to) => Math.max(0, Math.round((new Date(to) - new Date(from)) / 60000));
+const formatTime = (value) => value ? value.slice(11, 16) : '--:--';
 
-const toFlight = ({ id, airline, airlineCode, flightNumber, from, to, date, departureTime, arrivalTime, durationMins, stops, stopCity, aircraft, pricePerPerson, passengers, currency = 'INR', cabinClass = 'Economy', baggage = '15 kg' }) => ({
-  id,
-  airline,
-  airlineCode,
-  flightNumber,
-  from,
-  to,
-  date,
-  departureTime,
-  arrivalTime,
-  duration: formatDuration(durationMins),
-  durationMins,
-  stops,
-  stopCity: stopCity || null,
-  aircraft: aircraft || 'Aircraft unavailable',
-  pricePerPerson,
-  price: pricePerPerson * passengers,
-  currency,
-  seatsLeft: null,
-  cabinClass,
-  baggage,
-  meal: false,
-  refundable: false,
-});
+const toFlight = ({ itinerary, from, to, departDate, passengers }) => {
+  const outbound = itinerary.outbound || {};
+  const segments = outbound.segments || [];
+  const first = segments[0] || {};
+  const last = segments[segments.length - 1] || first;
+  const pricePerPerson = Number(itinerary.price?.amount || 0);
+  const durationMins = Number(outbound.duration_minutes || segments.reduce((sum, segment) => sum + (segment.duration_minutes || 0), 0));
 
-const searchSerpApi = async ({ from, to, departDate, passengers, cabinClass }) => {
-  const key = process.env.SERPAPI_KEY || process.env.SERPAPI_API_KEY;
-  if (!key || key.includes('your_key')) return [];
-
-  const params = new URLSearchParams({
-    engine: 'google_flights',
-    departure_id: from,
-    arrival_id: to,
-    outbound_date: departDate,
-    adults: String(passengers),
-    currency: 'INR',
-    type: '2',
-    travel_class: cabinClass === 'Business' ? '3' : cabinClass === 'First Class' ? '4' : '1',
-    api_key: key,
-  });
-  const response = await fetch(`${SERP_URL}?${params}`);
-  if (!response.ok) throw new Error(`SerpAPI search failed (${response.status})`);
-
-  const body = await response.json();
-  const results = [...(body.best_flights || []), ...(body.other_flights || [])];
-  return results.map((result, index) => {
-    const legs = result.flights || [];
-    const first = legs[0];
-    const last = legs[legs.length - 1];
-    const durationMins = Number(result.total_duration) || getMinutes(first?.departure_airport?.time, last?.arrival_airport?.time);
-    return toFlight({
-      id: `serp-${Date.now()}-${index}`,
-      airline: first?.airline || 'Airline',
-      flightNumber: first?.flight_number || '',
-      airlineCode: first?.flight_number?.match(/^[A-Z0-9]+/)?.[0] || '',
-      from: first?.departure_airport?.id || from,
-      to: last?.arrival_airport?.id || to,
-      date: departDate,
-      departureTime: first?.departure_airport?.time?.slice(-5) || '--:--',
-      arrivalTime: last?.arrival_airport?.time?.slice(-5) || '--:--',
-      durationMins,
-      stops: Math.max(0, legs.length - 1),
-      stopCity: legs[1]?.departure_airport?.id,
-      aircraft: first?.airplane,
-      pricePerPerson: Number(result.price) / passengers,
-      passengers,
-      cabinClass,
-    });
-  });
+  return {
+    id: itinerary.ignav_id,
+    ignavId: itinerary.ignav_id,
+    airline: outbound.carrier || first.operating_carrier_name || 'Airline',
+    airlineCode: first.marketing_carrier_code || '',
+    flightNumber: first.flight_number || '',
+    from: first.departure_airport || from,
+    to: last.arrival_airport || to,
+    date: departDate,
+    departureTime: formatTime(first.departure_time_local),
+    arrivalTime: formatTime(last.arrival_time_local),
+    duration: formatDuration(durationMins),
+    durationMins,
+    stops: Math.max(0, segments.length - 1),
+    stopCity: segments[1]?.departure_airport || null,
+    aircraft: first.aircraft || 'Aircraft unavailable',
+    pricePerPerson,
+    price: pricePerPerson * passengers,
+    currency: itinerary.price?.currency || 'USD',
+    seatsLeft: null,
+    cabinClass: itinerary.cabin_class || 'economy',
+    baggage: itinerary.bags?.checked ? `${itinerary.bags.checked} checked bag` : 'Included',
+    meal: false,
+    refundable: false,
+  };
 };
 
-const searchLiveFlights = async (params) => {
-  return searchSerpApi(params);
+const searchLiveFlights = async ({ from, to, departDate, passengers, cabinClass }) => {
+  const key = process.env.IGNAV_API_KEY;
+  if (!key || key.includes('your_key')) return [];
+
+  const response = await fetch(`${IGNAV_URL}/api/fares/one-way`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-Api-Key': key,
+    },
+    body: JSON.stringify({
+      origin: from,
+      destination: to,
+      departure_date: departDate,
+      adults: passengers,
+      cabin_class: cabinClass.toLowerCase().replace(' ', '_').replace('first_class', 'first'),
+      max_stops: 2,
+      market: 'IN',
+    }),
+  });
+  if (!response.ok) {
+    const error = await response.text();
+    throw new Error(`Ignav fare search failed (${response.status}): ${error.slice(0, 200)}`);
+  }
+
+  const body = await response.json();
+  return (body.itineraries || []).map((itinerary) => toFlight({ itinerary, from, to, departDate, passengers }));
 };
 
 module.exports = { searchLiveFlights };

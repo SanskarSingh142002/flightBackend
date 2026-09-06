@@ -33,7 +33,7 @@ const searchFlights = async (req, res, next) => {
     if (!flights.length) {
       return res.status(503).json({
         success: false,
-        message: 'Live flight search is not configured or returned no flights. Add a valid SerpAPI key and try again.',
+        message: 'Live flight search is not configured or returned no flights. Add a valid Ignav API key and try again.',
       });
     }
 
@@ -56,19 +56,12 @@ const getAirports = async (req, res, next) => {
       return res.json({ success: true, data: [] });
     }
 
-    const response = await fetch(`https://autocomplete.travelpayouts.com/places2?term=${encodeURIComponent(query)}&locale=en&types[]=airport`);
+    const response = await fetch(`https://ignav.com/api/airports?q=${encodeURIComponent(query)}&limit=12`, {
+      headers: { 'X-Api-Key': process.env.IGNAV_API_KEY },
+    });
     if (!response.ok) throw new Error(`Airport autocomplete failed (${response.status})`);
 
-    const places = await response.json();
-    const airports = places
-      .filter((place) => place.type === 'airport' && place.code)
-      .slice(0, 10)
-      .map((place) => ({
-        code: place.code,
-        name: place.name || place.code,
-        city: place.city_name || place.name || place.code,
-        country: place.country_name || '',
-      }));
+    const airports = await response.json();
 
     res.json({ success: true, data: airports });
   } catch (err) {
