@@ -16,6 +16,8 @@ const allowedOrigins = [
   'https://fareoracle.com',
   'https://www.fareoracle.com',
   'http://localhost:3000',
+  'http://localhost:5173',
+  'http://localhost:5174',
 ];
 app.use(cors({
   origin: (origin, cb) => {
