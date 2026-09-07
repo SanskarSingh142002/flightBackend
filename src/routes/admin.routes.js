@@ -16,6 +16,15 @@ router.use(protect);
 // All admin routes require admin OR staff role
 router.use(restrictTo('admin', 'staff'));
 
+// Disable caching for all admin responses (prevents NGINX/CDN/browser proxy caching)
+router.use((req, res, next) => {
+  res.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+  res.set('Pragma', 'no-cache');
+  res.set('Expires', '0');
+  res.set('Surrogate-Control', 'no-store');
+  next();
+});
+
 // GET  /api/admin/dashboard
 router.get('/dashboard', getDashboard);
 
