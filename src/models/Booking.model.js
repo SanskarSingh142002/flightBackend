@@ -41,7 +41,7 @@ const paymentSchema = new mongoose.Schema(
   {
     // Amount & currency
     amount:        { type: Number, required: true },
-    currency:      { type: String, default: 'INR' },
+    currency:      { type: String, default: 'USD' },
 
     // Status set by payment processor webhook / manual update
     status: {
@@ -132,7 +132,6 @@ const bookingSchema = new mongoose.Schema(
 // ── Index for fast admin queries ──────────────────────────────────────────────
 bookingSchema.index({ status: 1 });
 bookingSchema.index({ 'customer.email': 1 });
-bookingSchema.index({ bookingRef: 1 });
 bookingSchema.index({ createdAt: -1 });
 
 // ── Auto-push initial status to history on create ────────────────────────────

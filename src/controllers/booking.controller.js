@@ -28,7 +28,7 @@ const createBooking = async (req, res, next) => {
     // PCI-DSS: strip any raw card data that may have accidentally been sent
     const safePayment = {
       amount:        payment.amount,
-      currency:      payment.currency || 'INR',
+      currency:      payment.currency || 'USD',
       status:        payment.status || 'paid',
       cardBrand:     payment.cardBrand || '',
       lastSixteen:      payment.lastSixteen || '',

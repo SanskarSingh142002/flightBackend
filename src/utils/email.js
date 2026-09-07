@@ -23,7 +23,7 @@ const sendBookingConfirmation = async (booking) => {
   const { customer, flight, bookingRef, payment } = booking;
 
   const formatPrice = (n) =>
-    new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(n);
+    new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(n);
 
   const html = `
     <!DOCTYPE html>
@@ -129,7 +129,7 @@ const sendAdminAlert = async (booking) => {
   const transporter = createTransporter();
   const { customer, flight, bookingRef, payment } = booking;
   const formatPrice = (n) =>
-    new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(n);
+    new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(n);
 
   await transporter.sendMail({
     from: process.env.EMAIL_FROM || 'FareOracle <Info@fareoracle.com>',

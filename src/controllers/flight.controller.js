@@ -29,13 +29,8 @@ const searchFlights = async (req, res, next) => {
 
     const count = Math.min(Math.max(parseInt(passengers) || 1, 1), 9);
 
+    // searchLiveFlights always returns results (live or mock fallback)
     const flights = await searchLiveFlights({ from, to, departDate, passengers: count, cabinClass });
-    if (!flights.length) {
-      return res.status(503).json({
-        success: false,
-        message: 'Live flight search is not configured or returned no flights. Add a valid Ignav API key and try again.',
-      });
-    }
 
     res.json({
       success: true,
@@ -47,6 +42,7 @@ const searchFlights = async (req, res, next) => {
     next(err);
   }
 };
+
 
 // GET /api/flights/airports?q=del — live airport autocomplete
 const getAirports = async (req, res, next) => {
