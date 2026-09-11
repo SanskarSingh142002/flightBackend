@@ -15,6 +15,8 @@ const allowedOrigins = [
   process.env.FRONTEND_URL || 'http://localhost:5173',
   'https://fareoracle.com',
   'https://www.fareoracle.com',
+  'https://marwing2.sg-host.com',
+  'http://marwing2.sg-host.com',
   'http://localhost:3000',
   'http://localhost:5173',
   'http://localhost:5174',
